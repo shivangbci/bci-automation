@@ -7,7 +7,7 @@ import streamlit as st
 from datetime import datetime, timedelta
 
 # Streamlit App Title
-st.title("📄 PDF Table Extractor & Excel Converter")
+st.title("📄 Prodigy Bond Warehouse PDF Extractor")
 
 # File Uploader (PDF)
 uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
