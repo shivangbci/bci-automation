@@ -6,13 +6,40 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
 
+
+# st.set_page_config(page_title="Data Extraction Tool", page_icon="📊", layout="wide")
+
+# st.markdown(
+#     """
+#     <style>
+#         .centered-image {
+#             display: flex;
+#             justify-content: center;
+#         }
+#     </style>
+#     <div class="centered-image">
+#         <img src="/Users/shivangsingh/Downloads/itachi.jpg" width="800">
+#     </div>
+#     """,
+#     unsafe_allow_html=True
+# )
+
+
+col1, col2, col3 = st.columns([1, 3, 1])
+with col2:
+    st.image("images/bci_logo.jpeg", width=250)
+
 # Streamlit App Title
 st.title("📄 Prodigy PDF Extractor")
 
-option = st.selectbox(
-    "Select the Report Type",
-    ("Prodigy Warehouse", "Prodigy ABBSR")
-)
+st.sidebar.image("images/itachi.jpg", width=250)  # Replace with your logo image path
+st.sidebar.header("Navigation")
+option = st.sidebar.radio("Choose an Option:", ["Prodigy Warehouse", "Prodigy ABBSR"])
+
+# option = st.selectbox(
+#     "Select the Report Type",
+#     ("Prodigy Warehouse", "Prodigy ABBSR")
+# )
 
 def is_valid_filename_warehouse(filename):
     pattern = r"^\d{10}-[A-Za-z]+-OnbehalfofitsCompartmentC\d{8}-\d{1,2}-[A-Za-z0-9]+\.pdf$"
