@@ -34,7 +34,7 @@ st.title("📄 Prodigy PDF Extractor")
 
 st.sidebar.image("images/itachi.jpg", width=250)  # Replace with your logo image path
 st.sidebar.header("Navigation")
-option = st.sidebar.radio("Choose an Option:", ["Prodigy Warehouse", "Prodigy ABBSR"])
+option = st.sidebar.radio("Choose an Option:", ["Prodigy Warehouse", "Prodigy ABBSR", "Prodigy DFC"])
 
 # option = st.selectbox(
 #     "Select the Report Type",
@@ -47,6 +47,10 @@ def is_valid_filename_warehouse(filename):
 
 def is_valid_filename_abbsr(filename):
     pattern = r"^PFCM\s\d{4}-\d\sServicer\sReport\s-\s[A-Za-z]+\s\d{1,2}\.pdf$"
+    return bool(re.match(pattern, filename))
+
+def is_valid_filename_dfc(filename):
+    pattern = r"^\d+\.\d+-\d+\sPFCM\s\d{4}-\d\sServicer\sReport\s-\s[A-Za-z]+\s\d{1,2}\s?\(.*\)?\.pdf$"
     return bool(re.match(pattern, filename))
 
 
@@ -420,6 +424,225 @@ elif option == "Prodigy ABBSR":
 
                     # Update start_row to place the next dataset after 2 empty rows
                     start_row += len(data) + 2 
+
+            # Provide download button for final Excel file
+            with open(output_file, "rb") as f:
+                st.download_button("📥 Download Processed Excel", f, file_name=f"{option.replace(' ', '_')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+        else:
+            st.error("❌ Invalid file format! Please upload a correctly formatted file.")
+
+
+elif option == "Prodigy DFC":
+    st.subheader("Upload DFC PDF")
+    # File Uploader (PDF)
+    uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
+    if uploaded_file:
+        filename = uploaded_file.name
+        if is_valid_filename_dfc(filename):
+            st.success(f"✅ PDF {filename}' uploaded successfully!")
+
+            # Create 'tables' folder if it doesn't exist
+            folder_name = "dfc_files"
+            os.makedirs(folder_name, exist_ok=True)
+
+            with pdfplumber.open(uploaded_file) as pdf:
+                page_1 = pdf.pages[0]  # Page index 1 for Page 2
+                text_1 = page_1.extract_text()  # Extract text instead of table
+                page_5 = pdf.pages[4]
+                text_5 = page_5.extract_text()
+
+            lines = text_1.split("\n")
+            lines_page5 = text_5.split("\n")
+
+            key_value_pairs = [
+                (lines[1], ""),
+                (lines[2], "")
+            ]
+
+            # Convert the key-value pairs into a DataFrame
+            df1 = pd.DataFrame(key_value_pairs, columns=["Key", "Value"])
+            df1
+            output_filename = os.path.join(folder_name, 'extracted_df1.xlsx')
+            df1.to_excel(output_filename, index=False, header=False)
+
+            def is_number(s):
+                """Check if a string represents a number (integer or float)."""
+                try:
+                    float(s)  # Try converting to float
+                    return True
+                except ValueError:
+                    return False
+
+            def process_strings_limited(s):
+                s = s.replace(",", "")  # Remove all commas
+                words = s.split()
+
+                # Check if the last two words are numbers (integer or float)
+                if len(words) >= 2 and is_number(words[-1]) and is_number(words[-2]):
+                    words[-2] = words[-2] + words[-1]  # Concatenate numbers
+                    words.pop()  # Remove the last word
+                
+                return " ".join(words)
+
+            cleaned_lines = [process_strings_limited(line) for line in lines[4:26]]
+
+            data = []
+            for line in cleaned_lines:
+                words = line.split()
+                key = " ".join(words[:-1])  # Everything except last word
+                value = words[-1]  # Last word is the value
+                data.append((key, value))
+
+            df2 = pd.DataFrame(data, columns=[lines[3], ""])
+            # df2
+            output_filename = os.path.join(folder_name, 'extracted_df2.xlsx')
+            df2.to_excel(output_filename, index=False, header=False)
+
+            def clean_number_format(line):
+                # Remove commas
+                line = line.replace(",", "")
+                
+                # Split the line into words
+                parts = line.split()
+                
+                # Ensure there are at least three elements to check
+                if len(parts) > 3:
+                    # Check if the last three parts are numbers (including decimals)
+                    if re.match(r'^\d+(\.\d+)?$', parts[-1]) and re.match(r'^\d+(\.\d+)?$', parts[-2]) and re.match(r'^\d+(\.\d+)?$', parts[-3]):
+                        # Concatenate -3 and -2
+                        parts[-3] = parts[-3] + parts[-2]
+                        parts.pop(-2)  # Remove the now redundant -2
+                
+                return " ".join(parts)
+
+            cleaned_lines = [clean_number_format(line) for line in lines[26:-2]]
+
+            data = []
+            for line in cleaned_lines:
+                parts = line.split()
+                if len(parts) >= 3 and parts[-1].isdigit() and parts[-2].isdigit():
+                    name = " ".join(parts[:-2])  # Everything except last two parts
+                    num1 = parts[-2]  # Second last part
+                    num2 = parts[-1]  # Last part
+                    data.append([name, num1, num2])
+                else:
+                    data.append([line, "", ""])  # Keep the first column, leave the others empty
+
+            # Create DataFrame
+            df3 = pd.DataFrame(data, columns=["", "", ""])
+            # df3
+            output_filename = os.path.join(folder_name, 'extracted_df3.xlsx')
+            df3.to_excel(output_filename, index=False, header=False)
+
+
+            def clean_number_format(line):
+                # Remove commas
+                line = line.replace(",", "")
+
+                # Split the line into words
+                parts = line.split()
+
+                # Iterate through the words and merge numbers separated by spaces
+                cleaned_parts = []
+                i = 0
+                while i < len(parts):
+                    # Check if current and next part are numbers
+                    if i < len(parts) - 1 and re.match(r'^\d+$', parts[i]) and re.match(r'^\d+$', parts[i+1]):
+                        cleaned_parts.append(parts[i] + parts[i+1])  # Merge numbers
+                        i += 2  # Skip next part as it's merged
+                    else:
+                        cleaned_parts.append(parts[i])
+                        i += 1
+
+                return " ".join(cleaned_parts)
+
+            # Example usage
+            cleaned_lines = [clean_number_format(line) for line in lines_page5[26:-1]]
+
+            def split_key_value(line):
+                parts = line.rsplit(" ", 1)  # Split at the last space
+                last_part = parts[-1].strip()
+
+                # Check if last part is a number (including negative numbers in parentheses) or PASS/FAIL
+                if re.match(r'^-?\d+$', last_part) or re.match(r'^\(-?\d+\)$', last_part) or re.match(r'^\d{2}/\d{2}/\d{4}$', last_part) or last_part in {"PASS", "FAIL", "-"}:
+                    key = parts[0] if len(parts) > 1 else ""
+                    value = last_part
+                else:
+                    key = line  # Whole line as key
+                    value = ""
+
+                return key, value
+
+            data = [split_key_value(line) for line in cleaned_lines]
+            df4 = pd.DataFrame(data, columns=["", ""])
+            # df4
+            output_filename = os.path.join(folder_name, 'extracted_df4.xlsx')
+            df4.to_excel(output_filename, index=False, header=False)
+
+            def clean_number_format(line):
+                # Remove commas
+                line = line.replace(",", "")
+
+                # Split the line into words
+                parts = line.split()
+
+                # Iterate through the words and merge numbers separated by spaces
+                cleaned_parts = []
+                i = 0
+                while i < len(parts):
+                    # Check if current and next part are numbers
+                    if i < len(parts) - 1 and re.match(r'^\d+$', parts[i]) and re.match(r'^\d+$', parts[i+1]):
+                        cleaned_parts.append(parts[i] + parts[i+1])  # Merge numbers
+                        i += 2  # Skip next part as it's merged
+                    else:
+                        cleaned_parts.append(parts[i])
+                        i += 1
+
+                return " ".join(cleaned_parts)
+
+            # Example usage
+            cleaned_lines = [clean_number_format(line) for line in lines[3:34]]
+
+            def split_key_value(line):
+                parts = line.rsplit(" ", 1)  # Split at the last space
+                last_part = parts[-1].strip()
+
+                # Check if last part is a number (including negative numbers in parentheses) or PASS/FAIL
+                if  re.match(r'^-?\d+$', last_part) or re.match(r'^\(-?\d+\)$', last_part) or re.match(r'^\d{2}/\d{2}/\d{4}$', last_part) or re.match(r'^-?\d+(\.\d+)?%$', last_part) or re.match(r'^-?\d+\.\d+$', last_part) or last_part in {"PASS", "FAIL", "-"}:
+                    key = parts[0] if len(parts) > 1 else ""
+                    value = last_part
+                else:
+                    key = line  # Whole line as key
+                    value = ""
+
+                return key, value
+
+            data = [split_key_value(line) for line in cleaned_lines]
+            df5 = pd.DataFrame(data, columns=["", ""])
+            # df5
+            output_filename = os.path.join(folder_name, 'extracted_df5.xlsx')
+            df5.to_excel(output_filename, index=False, header=False)
+
+            output_file = 'prodigy_dfc_pdf_output.xlsx'
+            tables_folder = os.path.join(os.getcwd(), "dfc_files")
+            excel_files = [f for f in os.listdir(tables_folder) if f.endswith('.xlsx')]
+            sorted_file_names = sorted(excel_files, key=lambda x: int(re.search(r'(\d+)', x).group()))
+            # sorted_file_names
+            with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
+                start_row = 0  # Track the starting row for each dataset
+                
+                for file in sorted_file_names:
+                    # Read the data from the current file
+                    file_path = os.path.join(folder_name, file)
+                    # print("file_path", file_path)
+                    data = pd.read_excel(file_path)
+                    
+                    # Write data to the final Excel file at the correct row position
+                    data.to_excel(writer, sheet_name='Sheet1', startrow=start_row, index=False)
+
+                    # Update start_row to place the next dataset after 2 empty rows
+                    start_row += len(data) + 2
 
             # Provide download button for final Excel file
             with open(output_file, "rb") as f:
