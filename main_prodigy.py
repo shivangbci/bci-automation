@@ -462,7 +462,6 @@ elif option == "Prodigy DFC":
 
             # Convert the key-value pairs into a DataFrame
             df1 = pd.DataFrame(key_value_pairs, columns=["Key", "Value"])
-            df1
             output_filename = os.path.join(folder_name, 'extracted_df1.xlsx')
             df1.to_excel(output_filename, index=False, header=False)
 
