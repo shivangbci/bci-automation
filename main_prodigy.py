@@ -451,9 +451,12 @@ elif option == "Prodigy DFC":
                 text_1 = page_1.extract_text()  # Extract text instead of table
                 page_5 = pdf.pages[4]
                 text_5 = page_5.extract_text()
+                page_6 = pdf.pages[5]
+                text_6 = page_6.extract_text()
 
             lines = text_1.split("\n")
             lines_page5 = text_5.split("\n")
+            lines_page6 = text_6.split("\n")
 
             key_value_pairs = [
                 (lines[1], ""),
@@ -515,7 +518,7 @@ elif option == "Prodigy DFC":
                 
                 return " ".join(parts)
 
-            cleaned_lines = [clean_number_format(line) for line in lines[26:-2]]
+            cleaned_lines = [clean_number_format(line) for line in lines[26:-1]]
 
             data = []
             for line in cleaned_lines:
@@ -601,7 +604,7 @@ elif option == "Prodigy DFC":
                 return " ".join(cleaned_parts)
 
             # Example usage
-            cleaned_lines = [clean_number_format(line) for line in lines[3:34]]
+            cleaned_lines = [clean_number_format(line) for line in lines_page6[1:34]]
 
             def split_key_value(line):
                 parts = line.rsplit(" ", 1)  # Split at the last space
