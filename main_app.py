@@ -684,8 +684,8 @@ if main_option == "Salary Finance":
                         date_without_dots = date_part.replace('.', '')
                         password_servicer = "SRSkylark" + date_without_dots
                         password_base = "BBRSkylark" + date_without_dots
-                        st.write(f"Password for Servicer Report: {password_servicer}")
-                        st.write(f"Password for Base Report: {password_base}")
+                        # st.write(f"Password for Servicer Report: {password_servicer}")
+                        # st.write(f"Password for Base Report: {password_base}")
                         # filedate = date_part  # Return date as string
                         return password_servicer, password_base
                     else:
