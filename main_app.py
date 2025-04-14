@@ -672,40 +672,50 @@ if main_option == "Salary Finance":
 
             with st.spinner("Processing Data...Please wait."):
 
-                def get_password(filename):
+                def get_password(servicer_filename):
                     """
                     Extract password and file date from the filename.
                     Assumes filename starts with date in 'YYYY.MM.DD' format.
                     """
                     # filename = os.path.basename(file_path)
-                    match = re.match(r'(\d{4}\.\d{2}\.\d{2})', filename)
+                    match = re.match(r'(\d{4}\.\d{2}\.\d{2})', servicer_filename)
                     if match:
                         date_part = match.group(1)
                         date_without_dots = date_part.replace('.', '')
-                        password = "SRSkylark" + date_without_dots
-                        filedate = date_part  # Return date as string
-                        return password
+                        password_servicer = "SRSkylark" + date_without_dots
+                        password_base = "BBRSkylark" + date_without_dots
+                        st.write(f"Password for Servicer Report: {password_servicer}")
+                        st.write(f"Password for Base Report: {password_base}")
+                        # filedate = date_part  # Return date as string
+                        return password_servicer, password_base
                     else:
-                        raise ValueError(f"Date not found at the beginning of filename: {filename}")
+                        raise ValueError(f"Date not found at the beginning of filename: {servicer_filename}")
 
                 # Read Base Report file
                 sheets_base = [
                     "11. Sub BB Schedule", "7. Concentration limits", "5. Advance Rate", "4. Mezz BB Schedule", 
                     "3. Snr BB Schedule", "0. Pre-Funding Forecast", "8.B. Employer concentration", "1.B. Data Tape"
                 ]
-                dfs_base = {sheet: pd.read_excel(base_file, sheet_name=sheet, engine="pyxlsb") for sheet in sheets_base}
+                password_servicer, password_base = get_password(servicer_filename)  # Set the actual password
+                decrypted_file_base = BytesIO()
+                office_file = msoffcrypto.OfficeFile(base_file)
+                # st.write(office_file)
+                office_file.load_key(password=password_base)
+                office_file.decrypt(decrypted_file_base)
+
+                dfs_base = {sheet: pd.read_excel(decrypted_file_base, sheet_name=sheet, engine="pyxlsb") for sheet in sheets_base}
                 
                 # Read Servicer Report file (Decrypted)
                 sheets_servicer = [
                     "13. Seller Related Events", "12. Asset Related Events", "5. Advance Rate", "3. Snr BB Schedule"
                 ]
-                password = get_password(servicer_filename)  # Set the actual password
-                decrypted_file = BytesIO()
+                # password = get_password(servicer_filename)  # Set the actual password
+                decrypted_file_servicer = BytesIO()
                 office_file = msoffcrypto.OfficeFile(servicer_file)
-                office_file.load_key(password=password)
-                office_file.decrypt(decrypted_file)
+                office_file.load_key(password=password_servicer)
+                office_file.decrypt(decrypted_file_servicer)
 
-                dfs_servicer = {sheet: pd.read_excel(decrypted_file, sheet_name=sheet, engine="pyxlsb") for sheet in sheets_servicer}
+                dfs_servicer = {sheet: pd.read_excel(decrypted_file_servicer, sheet_name=sheet, engine="pyxlsb") for sheet in sheets_servicer}
 
                 # Extract DataFrames
                 df_sub_bb = dfs_base["11. Sub BB Schedule"]
