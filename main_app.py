@@ -12,22 +12,6 @@ from openpyxl.styles import Font
 from datetime import datetime, timedelta
 
 
-# st.set_page_config(page_title="Data Extraction Tool", page_icon="📊", layout="wide")
-
-# st.markdown(
-#     """
-#     <style>
-#         .centered-image {
-#             display: flex;
-#             justify-content: center;
-#         }
-#     </style>
-#     <div class="centered-image">
-#         <img src="/Users/shivangsingh/Downloads/itachi.jpg" width="800">
-#     </div>
-#     """,
-#     unsafe_allow_html=True
-# )
 
 
 col1, col2, col3 = st.columns([1, 3, 1])
