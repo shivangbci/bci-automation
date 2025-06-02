@@ -656,31 +656,48 @@ if main_option == "Salary Finance":
 
             with st.spinner("Processing Data...Please wait."):
 
-                def get_password(servicer_filename):
+                def get_password(servicer_filename, base_filename):
                     """
                     Extract password and file date from the filename.
                     Assumes filename starts with date in 'YYYY.MM.DD' format.
                     """
                     # filename = os.path.basename(file_path)
-                    match = re.match(r'(\d{4}\.\d{2}\.\d{2})', servicer_filename)
-                    if match:
-                        date_part = match.group(1)
+                    pwd = []
+                    match_servicer = re.match(r'(\d{4}\.\d{2}\.\d{2})', servicer_filename)
+
+                    match_base = re.match(r'(\d{4}\.\d{2}\.\d{2})', base_filename)
+
+                    if match_servicer:
+                        date_part = match_servicer.group(1)
                         date_without_dots = date_part.replace('.', '')
                         password_servicer = "SRSkylark" + date_without_dots
-                        password_base = "BBRSkylark" + date_without_dots
-                        # st.write(f"Password for Servicer Report: {password_servicer}")
-                        # st.write(f"Password for Base Report: {password_base}")
-                        # filedate = date_part  # Return date as string
-                        return password_servicer, password_base
+                        # password_base = "BBRSkylark" + date_without_dots
+
+                        # return password_servicer, password_base
+                        pwd.append(password_servicer)
                     else:
                         raise ValueError(f"Date not found at the beginning of filename: {servicer_filename}")
+                    
+                    if match_base:
+                        date_part = match_base.group(1)
+                        date_without_dots = date_part.replace('.', '')
+                        # password_servicer = "SRSkylark" + date_without_dots
+                        password_base = "BBRSkylark" + date_without_dots
+
+                        # return password_servicer, password_base
+                        pwd.append(password_base)   
+                    else:
+                        raise ValueError(f"Date not found at the beginning of filename: {servicer_filename}")
+                    return pwd[0], pwd[1]
 
                 # Read Base Report file
                 sheets_base = [
                     "11. Sub BB Schedule", "7. Concentration limits", "5. Advance Rate", "4. Mezz BB Schedule", 
                     "3. Snr BB Schedule", "0. Pre-Funding Forecast", "8.B. Employer concentration", "1.B. Data Tape"
                 ]
-                password_servicer, password_base = get_password(servicer_filename)  # Set the actual password
+                password_servicer, password_base = get_password(servicer_filename, base_filename)  # Set the actual password
+                # st.write(f"Password for Servicer Report: {password_servicer}")
+                # st.write(f"Password for Base Report: {password_base}")
                 decrypted_file_base = BytesIO()
                 office_file = msoffcrypto.OfficeFile(base_file)
                 # st.write(office_file)
