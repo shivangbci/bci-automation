@@ -693,7 +693,10 @@ if main_option == "Salary Finance":
                 # Read Base Report file
                 sheets_base = [
                     "11. Sub BB Schedule", "7. Concentration limits", "5. Advance Rate", "4. Mezz BB Schedule", 
-                    "3. Snr BB Schedule", "0. Pre-Funding Forecast", "8.B. Employer concentration", "1.B. Data Tape"
+                    "3. Snr BB Schedule", 
+                    # "0. Pre-Funding Forecast",
+                    "Utilisation summary",
+                      "8.B. Employer concentration", "1.B. Data Tape"
                 ]
                 password_servicer, password_base = get_password(servicer_filename, base_filename)  # Set the actual password
                 # st.write(f"Password for Servicer Report: {password_servicer}")
@@ -724,7 +727,8 @@ if main_option == "Salary Finance":
                 df_adv_rate = dfs_base["5. Advance Rate"]
                 df_mezz_bb = dfs_base["4. Mezz BB Schedule"]
                 df_sen_bb = dfs_base["3. Snr BB Schedule"]
-                df_pre_fund = dfs_base["0. Pre-Funding Forecast"]
+                # df_pre_fund = dfs_base["0. Pre-Funding Forecast"]
+                df_pre_fund = dfs_base["Utilisation summary"]
                 df_emp_conc = dfs_base["8.B. Employer concentration"]
                 df_data_tape = dfs_base["1.B. Data Tape"]
 
@@ -741,7 +745,7 @@ if main_option == "Salary Finance":
                 bb5 = df_mezz_bb.iloc[34, 5] + df_mezz_bb.iloc[32, 5]
                 bb6 = bb1 + bb2 + bb3 - (bb4 + bb5)
 
-                bb7 = df_pre_fund.iloc[47, 4]
+                bb7 = df_pre_fund.iloc[12, 2]
                 bb8 = df_sub_bb.iloc[22, 5]
                 bb9 = bb7 + bb8
                 bb10 = df_sub_bb.iloc[27, 5]
